@@ -1,0 +1,29 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=3006
+
+CSSMinister provides key mappings that convert any hexadecimal, RGB or HSL color values from one format to another.  The mappings fall into two categories:  1) those that change the next matching color only, and 2) those that change all colors matching the requested format in the current file.
+
+Mappings that change formats one color at a time include:
+
+  ,xr - hexadecimal to RGB
+  ,xh - hexadecimal to HSL
+  ,rx - RGB to hexadecimal
+  ,rh - RGB to HSL
+  ,hx - HSL to hexadecimal
+  ,hr - HSL to RGB
+  ,kx - color keyword to hexadecimal
+  ,kr - color keyword to RGB
+  ,kh - color keyword to HSL
+
+Mappings that change all colors matching the requested color format:
+
+  ,axr - all hexadecimal to RGB
+  ,axh - all hexadecimal to HSL
+  ,arx - all RGB to hexadecimal
+  ,arh - all RGB to HSL
+  ,ahx - all HSL to hexadecimal
+  ,ahr - all HSL to RGB
+  ,akx - all color keywords to hexadecimal
+  ,akr - all color keywords to RGB
+  ,akh - all color keywords to HSL
+
+This script was tested with CSS, Sass and Less stylesheets.  However, it is possible that it may work anywhere CSS color values are used.
