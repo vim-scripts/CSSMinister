@@ -1,15 +1,15 @@
 " =============================================================================
 " File:          CSSMinister.vim
-" Maintainer:    Kuroi Kenshi <kuroi_keshi96 at yahoo dot com>
+" Maintainer:    Luis Gonzalez <kuroi_kenshi96 at yahoo dot com>
 " Description:   Easy modification of colors in CSS stylesheets. Change colors
 "                from one format to another. Currently supported formats include
 "                hex, RGB and HSL.
-" Last Modified: March 07, 2010
+" Last Modified: March 19, 2010
 " License:       GPL (see http://www.gnu.org/licenses/gpl.txt)
 "
-" TODO: named colors (i.e white, black, cyan, etc)
+" TODO: visual mode conversions 
 " TODO: rgba and hsla conversions
-" TODO: conversions in visual mode
+" TODO: fix slow execution time when converting one color at a time
 " TODO: alt. delimeters for mappings
 " =============================================================================
 
@@ -18,7 +18,7 @@ if exists("g:CSSMinister_version") || &cp
     finish
 endif
 
-let g:CSSMinister_version = "0.1.0"
+let g:CSSMinister_version = "0.2.1"
 
 " Constants {{{1
 let s:RGB_NUM_RX    = '\v\crgb\(([01]?\d\d?|2[0-4]\d|25[0-5]),\s*([01]?\d\d?|2[0-4]\d|25[0-5]),\s*([01]?\d\d?|2[0-4]\d|25[0-5])\);?'
@@ -27,8 +27,28 @@ let s:RGB_DISCOVERY = '\v\crgb\(\d+.*,\s*\d+.*,\s*\d+.*\);?'
 let s:HSL           = '\vhsl\((-?\d+),\s*(\d\%|[1-9][0-9]\%|100\%),\s*(\d\%|[1-9][0-9]\%|100\%)\);?'
 let s:HEX           = '\v([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})'
 let s:HEX_DISCOVERY = '\v#[0-9a-fA-F]{3,6}'
+let s:W3C_COLOR_RX  = '\v\c(black|silver|gray|white(-space)@!|maroon|red|purple|fuchsia|green|lime|olive|yellow|navy|blue|teal|aqua)'
+
+let s:W3C_COLORS = { 'black':   '#000000',
+		   \ 'silver':  '#C0C0C0',
+		   \ 'gray':    '#808080',
+		   \ 'white':   '#FFFFFF',
+		   \ 'maroon':  '#800000',
+		   \ 'red':     '#FF0000',
+		   \ 'purple':  '#800080',
+		   \ 'fuchsia': '#FF00FF', 
+		   \ 'green':   '#008000',
+		   \ 'lime':    '#00FF00',
+		   \ 'olive':   '#808000',
+		   \ 'yellow':  '#FFFF00',
+		   \ 'navy':    '#000080',
+		   \ 'blue':    '#0000FF',
+		   \ 'teal':    '#008080',
+		   \ 'aqua':    '#00FFFF' }
+
 
 let g:CSSMinisterCreateMappings = 1
+
 
 " Public API {{{1
 " Mappings {{{2
@@ -40,35 +60,47 @@ endfunction
 
 
 if g:CSSMinisterCreateMappings
-   call s:CreateMappings('<Plug>CSSMinisterHexToRGB',    ',xr')
-   call s:CreateMappings('<Plug>CSSMinisterHexToRGBAll', ',axr')
-   call s:CreateMappings('<Plug>CSSMinisterHexToHSL',    ',xh')
-   call s:CreateMappings('<Plug>CSSMinisterHexToHSLAll', ',axh')
-   call s:CreateMappings('<Plug>CSSMinisterRGBToHex',    ',rx')
-   call s:CreateMappings('<Plug>CSSMinisterRGBToHexAll', ',arx')
-   call s:CreateMappings('<Plug>CSSMinisterRGBToHSL',    ',rh')
-   call s:CreateMappings('<Plug>CSSMinisterRGBToHSLAll', ',arh')
-   call s:CreateMappings('<Plug>CSSMinisterHSLToHex',    ',hx')
-   call s:CreateMappings('<Plug>CSSMinisterHSLToHexAll', ',ahx')
-   call s:CreateMappings('<Plug>CSSMinisterHSLToRGB',    ',hr')
-   call s:CreateMappings('<Plug>CSSMinisterHSLToRGBAll', ',ahr')
+   call s:CreateMappings('<Plug>CSSMinisterHexToRGB',        ',xr')
+   call s:CreateMappings('<Plug>CSSMinisterHexToRGBAll',     ',axr')
+   call s:CreateMappings('<Plug>CSSMinisterHexToHSL',        ',xh')
+   call s:CreateMappings('<Plug>CSSMinisterHexToHSLAll',     ',axh')
+   call s:CreateMappings('<Plug>CSSMinisterRGBToHex',        ',rx')
+   call s:CreateMappings('<Plug>CSSMinisterRGBToHexAll',     ',arx')
+   call s:CreateMappings('<Plug>CSSMinisterRGBToHSL',        ',rh')
+   call s:CreateMappings('<Plug>CSSMinisterRGBToHSLAll',     ',arh')
+   call s:CreateMappings('<Plug>CSSMinisterHSLToHex',        ',hx')
+   call s:CreateMappings('<Plug>CSSMinisterHSLToHexAll',     ',ahx')
+   call s:CreateMappings('<Plug>CSSMinisterHSLToRGB',        ',hr')
+   call s:CreateMappings('<Plug>CSSMinisterHSLToRGBAll',     ',ahr')
+   call s:CreateMappings('<Plug>CSSMinisterKeywordToHex',    ',kx')
+   call s:CreateMappings('<Plug>CSSMinisterKeywordToHexAll', ',akx')
+   call s:CreateMappings('<Plug>CSSMinisterKeywordToRGB',    ',kr')
+   call s:CreateMappings('<Plug>CSSMinisterKeywordToRGBAll', ',akr')
+   call s:CreateMappings('<Plug>CSSMinisterKeywordToHSL',    ',kh')
+   call s:CreateMappings('<Plug>CSSMinisterKeywordToHSLAll', ',akh')
 
    let g:CSSMinisterCreateMappings = 0
 endif
 
 
-noremap <silent> <script> <Plug>CSSMinisterHexToRGB    :call Convert('hex', 'rgb')<CR>
-noremap <silent> <script> <Plug>CSSMinisterHexToRGBAll :call Convert('hex', 'rgb', 'all')<CR>
-noremap <silent> <script> <Plug>CSSMinisterHexToHSL    :call Convert('hex', 'hsl')<CR>
-noremap <silent> <script> <Plug>CSSMinisterHexToHSLAll :call Convert('hex', 'hsl', 'all')<CR>
-noremap <silent> <script> <Plug>CSSMinisterRGBToHex    :call Convert('rgb', 'hex')<CR>
-noremap <silent> <script> <Plug>CSSMinisterRGBToHexAll :call Convert('rgb', 'hex', 'all')<CR>
-noremap <silent> <script> <Plug>CSSMinisterRGBToHSL    :call Convert('rgb', 'hsl')<CR>
-noremap <silent> <script> <Plug>CSSMinisterRGBToHSLAll :call Convert('rgb', 'hsl', 'all')<CR>
-noremap <silent> <script> <Plug>CSSMinisterHSLToHex    :call Convert('hsl', 'hex')<CR>
-noremap <silent> <script> <Plug>CSSMinisterHSLToHexAll :call Convert('hsl', 'hex', 'all')<CR>
-noremap <silent> <script> <Plug>CSSMinisterHSLToRGB    :call Convert('hsl', 'rgb')<CR>
-noremap <silent> <script> <Plug>CSSMinisterHSLToRGBAll :call Convert('hsl', 'rgb', 'all')<CR>
+noremap <silent> <script> <Plug>CSSMinisterHexToRGB        :call MinisterConvert('hex', 'rgb')<CR>
+noremap <silent> <script> <Plug>CSSMinisterHexToRGBAll     :call MinisterConvert('hex', 'rgb', 'all')<CR>
+noremap <silent> <script> <Plug>CSSMinisterHexToHSL        :call MinisterConvert('hex', 'hsl')<CR>
+noremap <silent> <script> <Plug>CSSMinisterHexToHSLAll     :call MinisterConvert('hex', 'hsl', 'all')<CR>
+noremap <silent> <script> <Plug>CSSMinisterRGBToHex        :call MinisterConvert('rgb', 'hex')<CR>
+noremap <silent> <script> <Plug>CSSMinisterRGBToHexAll     :call MinisterConvert('rgb', 'hex', 'all')<CR>
+noremap <silent> <script> <Plug>CSSMinisterRGBToHSL        :call MinisterConvert('rgb', 'hsl')<CR>
+noremap <silent> <script> <Plug>CSSMinisterRGBToHSLAll     :call MinisterConvert('rgb', 'hsl', 'all')<CR>
+noremap <silent> <script> <Plug>CSSMinisterHSLToHex        :call MinisterConvert('hsl', 'hex')<CR>
+noremap <silent> <script> <Plug>CSSMinisterHSLToHexAll     :call MinisterConvert('hsl', 'hex', 'all')<CR>
+noremap <silent> <script> <Plug>CSSMinisterHSLToRGB        :call MinisterConvert('hsl', 'rgb')<CR>
+noremap <silent> <script> <Plug>CSSMinisterHSLToRGBAll     :call MinisterConvert('hsl', 'rgb', 'all')<CR>
+noremap <silent> <script> <Plug>CSSMinisterKeywordToHex    :call MinisterConvert('keyword', 'hex')<CR>
+noremap <silent> <script> <Plug>CSSMinisterKeywordToHexAll :call MinisterConvert('keyword', 'hex', 'all')<CR>
+noremap <silent> <script> <Plug>CSSMinisterKeywordToRGB    :call MinisterConvert('keyword', 'rgb')<CR>
+noremap <silent> <script> <Plug>CSSMinisterKeywordToRGBAll :call MinisterConvert('keyword', 'rgb', 'all')<CR>
+noremap <silent> <script> <Plug>CSSMinisterKeywordToHSL    :call MinisterConvert('keyword', 'hsl')<CR>
+noremap <silent> <script> <Plug>CSSMinisterKeywordToHSLAll :call MinisterConvert('keyword', 'hsl', 'all')<CR>
 "}}}2
 
 
@@ -79,11 +111,11 @@ noremap <silent> <script> <Plug>CSSMinisterHSLToRGBAll :call Convert('hsl', 'rgb
 "   to:    format we're converting to
 "   {all}: specify whether to convert the next matching color or all colors in 
 "          buffer
-function! Convert(from, to, ...)
+function! MinisterConvert(from, to, ...)
     if a:from == a:to | return | endif
     let all = a:0 >= 1 ? a:1 : ''
 
-    if a:from =~ '\vhex|rgb|hsl'
+    if a:from =~ '\vhex|rgb|hsl|keyword'
         if all == 'all'
             call s:ReplaceAll(a:from, a:to)
         else 
@@ -100,6 +132,8 @@ function! ToRGB(from_format)
         return s:HexToRGB(a:from_format)
     elseif s:IsHSL(a:from_format)
         return s:HSLToRGB(a:from_format)
+    elseif s:IsKeyword(a:from_format)
+        return s:HexToRGB(ToHex(a:from_format))
     endif
 endfunction
 
@@ -112,6 +146,9 @@ function! ToHSL(from_format)
         return s:RGBToHSL(rgb)
     elseif s:IsRGB(a:from_format)
         return s:RGBToHSL(a:from_format)
+    elseif s:IsKeyword(a:from_format)
+        let rgb = s:HexToRGB(ToHex(a:from_format))
+        return s:RGBToHSL(rgb)
     endif
 endfunction
 
@@ -124,6 +161,8 @@ function! ToHex(from_format)
     elseif s:IsHSL(a:from_format)
         let rgb = s:HSLToRGB(a:from_format)
         return s:RGBToHex(rgb)
+    elseif s:IsKeyword(a:from_format)
+	return s:KeywordToHex(a:from_format)
     endif
 endfunction
 
@@ -143,6 +182,10 @@ endfunction
 
 function! s:IsHex(color)
     return a:color =~ s:HEX_DISCOVERY
+endfunction
+
+function! s:IsKeyword(color)
+    return has_key(s:W3C_COLORS, a:color)
 endfunction
 
 
@@ -302,6 +345,12 @@ function! s:ToHex(rgb)
 endfunction
 
 
+" -----------------------------------------------------------------------------
+function! s:KeywordToHex(kw)
+    return s:W3C_COLORS[a:kw]
+endfunction
+
+
 " Replacement functions {{{1
 " -----------------------------------------------------------------------------
 " s:ReplaceAll: Replaces all colors in the current buffer to the requested
@@ -364,20 +413,15 @@ endfunction
 "   to:   the color format we're converting to
 function! s:ReplacementPairings(from, to)
     let pairings = {}
+    let from_rx_mappings = { 'rgb': s:RGB_NUM_RX . '|' . strpart(s:RGB_PERC_RX, 4, strlen(s:RGB_PERC_RX)), 
+                           \ 'hsl': s:HSL, 
+                           \ 'hex': s:HEX_DISCOVERY, 
+                           \ 'keyword': s:W3C_COLOR_RX }
 
-    if a:to == 'hex'
-        let pairings.to = 'Hex'
-        if       a:from == 'rgb' | let pairings.from_rx = s:RGB_NUM_RX . '|' . strpart(s:RGB_PERC_RX, 4, strlen(s:RGB_PERC_RX)) |
-        \ elseif a:from == 'hsl' | let pairings.from_rx = s:HSL           | endif
-    elseif a:to == 'rgb'
-        let pairings.to = 'RGB'
-        if       a:from == 'hex' | let pairings.from_rx = s:HEX_DISCOVERY | 
-        \ elseif a:from == 'hsl' | let pairings.from_rx = s:HSL           | endif
-    elseif a:to == 'hsl'
-        let pairings.to = 'HSL'
-        if       a:from == 'rgb' | let pairings.from_rx = s:RGB_NUM_RX . '|' . strpart(s:RGB_PERC_RX, 4, strlen(s:RGB_PERC_RX)) |
-        \ elseif a:from == 'hex' | let pairings.from_rx = s:HEX_DISCOVERY | endif
-    endif
+    if a:to == 'hex' | let pairings.to = 'Hex' |
+    \ elseif a:to == 'rgb' || a:to == 'hsl' | let pairings.to = toupper(a:to) | endif
+
+    let pairings.from_rx = from_rx_mappings[a:from]
 
     return pairings
 endfunction
