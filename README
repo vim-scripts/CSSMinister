@@ -1,29 +1,31 @@
 This is a mirror of http://www.vim.org/scripts/script.php?script_id=3006
 
-CSSMinister provides key mappings that convert any hexadecimal, RGB or HSL color values from one format to another.  The mappings fall into two categories:  1) those that change the next matching color only, and 2) those that change all colors matching the requested format in the current file.
+CSSMinister provides functions and mappings that convert any hexadecimal, keyword, RGB(A) or HSL(A) color values from one format to another.  The functions fall into two categories:  1) those that change the next matching color only, and 2) those that change all colors matching the requested format in a range or in the entire buffer.
 
-Mappings that change formats one color at a time include:
+Functions that change formats one color at a time include:
 
-  ,xr - hexadecimal to RGB
-  ,xh - hexadecimal to HSL
-  ,rx - RGB to hexadecimal
-  ,rh - RGB to HSL
-  ,hx - HSL to hexadecimal
-  ,hr - HSL to RGB
-  ,kx - color keyword to hexadecimal
-  ,kr - color keyword to RGB
-  ,kh - color keyword to HSL
+  :ToHex
+  :ToRGB
+  :ToRGBA
+  :ToHSL
+  :ToHSLA
 
-Mappings that change all colors matching the requested color format:
+Functions that change all colors matching the requested color format in a range or in the entire buffer:
 
-  ,axr - all hexadecimal to RGB
-  ,axh - all hexadecimal to HSL
-  ,arx - all RGB to hexadecimal
-  ,arh - all RGB to HSL
-  ,ahx - all HSL to hexadecimal
-  ,ahr - all HSL to RGB
-  ,akx - all color keywords to hexadecimal
-  ,akr - all color keywords to RGB
-  ,akh - all color keywords to HSL
+  :ToHexAll <format>
+  :ToRGBAll <format>
+  :ToRGBAAll <format>
+  :ToHSLAll <format>
+  :ToHSLAAll <format>
 
-This script was tested with CSS, Sass and Less stylesheets.  However, it is possible that it may work anywhere CSS color values are used.
+Where <format> is the color format you're converting from.
+
+As of v1.0.0, the above commands replace the old key mappings as a less obtrusive solution for converting between different color formats. Some key mappings remain for those that prefer them:
+
+  <leader>x - convert to hex
+  <leader>r - convert to rgb
+  <leader>h - convert to hsl
+  <leader>ra - convert to rgba
+  <leader>ha - convert to hsla
+
+This script was tested with CSS, Sass and Less stylesheets.  However, it should work anywhere CSS color values are used.
