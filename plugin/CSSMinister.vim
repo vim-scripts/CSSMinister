@@ -174,8 +174,6 @@ let s:W3C_COLORS = { 'aliceblue':            '#F0F8FF',
                    \ 'yellow':               '#FFFF00',
                    \ 'yellowgreen':          '#9ACD32' }
 
-let g:CSSMinisterCreateMappings = 1
-
 
 " Public API {{{1
 " Configuration variables {{{2
